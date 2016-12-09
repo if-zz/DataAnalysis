@@ -13,10 +13,13 @@ from random import shuffle
 def score(classifier):
     classifier = SklearnClassifier(classifier) #在nltk 中使用scikit-learn 的接口
     classifier.train(train)  #训练分类器,train是训练集合
-    # pickle.dump(classifier,open("./weibofile"+'/'+'classifier'+'.pkl','wb'))
+    # pickle.dump(classifier,open("./weibofile"+'/'+'classifier'+'.pkl','wb')) #为了方便以后使用，可以将该分类器存储下来
     devSet, tag_dev = zip(*devtest)
     pred = classifier.classify_many(devSet) #对开发测试集的数据进行分类，给出预测的标签
     return accuracy_score(tag_dev, pred) #对比分类预测结果和人工标注的正确结果，给出分类器准确度
+'''
+以下为对数据进行格式化存储
+'''
 # with open('./weibofile/weibo-seg-0.txt') as f:
 #     pos_review=[]
 #     for line in f:
@@ -79,7 +82,7 @@ NuSVC`s accuracy is 0.710000
 # negFeatures = feature.neg_features(feature.bigram_words,neg)
 
 '''
-使用卡方统计量（Chi-square）来选择信息量丰富的特征
+使用卡方统计量（Chi-square）来选择信息量丰富的特征(以所有词作为特征)
 BernoulliNB`s accuracy is 0.810000
 MultinomiaNB`s accuracy is 0.800000
 LogisticRegression`s accuracy is 0.750000
@@ -88,11 +91,15 @@ LinearSVC`s accuracy is 0.770000
 NuSVC`s accuracy is 0.740000
 
 '''
-# word_scores = feature.create_word_scores()
-# best_words = feature.find_best_words(word_scores, 1500) #选择信息量最丰富的1500个的特征
+# posFeatures = pos_features(feature_extraction_method1,pos)
+# negFeatures = neg_features(feature_extraction_method1,neg)
 
-posFeatures = pos_features(feature_extraction_method1,pos)
-negFeatures = neg_features(feature_extraction_method1,neg)
+'''
+使用卡方统计量（Chi-square）来选择信息量丰富的特征（以所有词加双词作为特征）
+耗时太长暂未实验
+'''
+posFeatures = pos_features(feature_extraction_method2,pos)
+negFeatures = neg_features(feature_extraction_method2,neg)
 train = posFeatures[174:]+negFeatures[174:]
 devtest = posFeatures[124:174]+negFeatures[124:174]
 test = posFeatures[:124]+negFeatures[:124]
@@ -102,3 +109,15 @@ print 'LogisticRegression`s accuracy is %f' %score(LogisticRegression())
 print 'SVC`s accuracy is %f' %score(SVC())
 print 'LinearSVC`s accuracy is %f' %score(LinearSVC())
 print 'NuSVC`s accuracy is %f' %score(NuSVC())
+
+'''
+要对新的数据进行分类时，现将数据处理为指定格式后读入
+def extract_features(data):
+    feat = []
+    for i in data:
+        feat.append(feature_extraction_method2(i))
+    return feat
+moto_features = extract_features(moto) #把文本转化为特征表示的形式
+然后载入训练好的分类器clf，即可进行分类
+pred = clf.batch_prob_classify(moto_features) #该方法是计算分类概率值的
+'''
